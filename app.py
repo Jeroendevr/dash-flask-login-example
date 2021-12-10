@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, url_for
 import flask_login
 import dash
 import dash_core_components as dcc
@@ -8,8 +8,9 @@ import pandas as pd
 
 # Setup the Flask server
 server = Flask(__name__)
-# app = flask.Flask(__name__)
-app = dash.Dash(__name__)
+
+app = Flask(__name__)
+# app = dash.Dash(__name__)
 app.secret_key = "hoi"
 
 login_manager = flask_login.LoginManager()
@@ -56,7 +57,7 @@ def login():
         user = User()
         user.id = email
         flask_login.login_user(user)
-        return redirect(Flask.url_for('protected'))
+        return redirect(url_for('protected'))
     return 'Bad login'
 
 @app.route('/protected')
