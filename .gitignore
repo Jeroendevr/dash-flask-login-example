@@ -1,0 +1,4 @@
+.DS_Store
+app.py
+flask_auth.code-workspace
+__pycache__/*
