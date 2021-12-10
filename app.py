@@ -1,10 +1,10 @@
-from flask import Flask, request, redirect, url_for
-import flask_login
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
+from flask import Flask, redirect, request, url_for
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
 # Setup the Flask server
 server = Flask(__name__)
@@ -13,13 +13,13 @@ app = Flask(__name__)
 # app = dash.Dash(__name__)
 app.secret_key = "hoi"
 
-login_manager = flask_login.LoginManager()
+login_manager = LoginManager()
 login_manager.init_app(app)
 
 # Database
 users = {'tim@tim.tld':{'password': 'hoi'}}
 
-class User(flask_login.UserMixin):
+class User(UserMixin):
     pass
 
 @login_manager.user_loader
@@ -56,18 +56,18 @@ def login():
     if request.form['password'] == users[email]['password']:
         user = User()
         user.id = email
-        flask_login.login_user(user)
+        login_user(user)
         return redirect(url_for('protected'))
     return 'Bad login'
 
 @app.route('/protected')
-@flask_login.login_required
+@login_required
 def protected():
-    return 'logged in as : ' + flask_login.current_user.id
+    return 'logged in as : ' + current_user.id
 
 @app.route('/logout')
 def logout():
-    flask_login.logout_user()
+    logout_user()
     return 'Logged out'
 
 @login_manager.unauthorized_handler
