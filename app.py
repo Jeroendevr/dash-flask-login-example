@@ -1,4 +1,5 @@
 from dash import dcc, html
+from dash.dash import Dash
 import pandas as pd
 import plotly.express as px
 from flask import Flask, redirect, request, url_for
@@ -71,6 +72,7 @@ def logout():
 def unauthorized_handler():
     return 'Unauthorized'
 
+app = Dash(name='app1', url_base_pathname='/app1/', server=server)
 df = pd.DataFrame({
     "Fruit": ["Apples", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
     "Amount": [4, 1, 2, 2, 4, 5],
@@ -79,7 +81,7 @@ df = pd.DataFrame({
 
 fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="group")
 
-server.layout = html.Div(children=[
+app.layout = html.Div(children=[
     html.H1(children='Hello Dash'),
 
     html.Div(children='''
