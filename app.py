@@ -1,4 +1,6 @@
-from os import name, urandom
+# Flask-Login example inspired by https://github.com/shekhargulati/flask-login-example/blob/master/flask-login-example.py
+# and https://github.com/gaw89/dash-flask-login/blob/master/usage_dash_flask_login.py
+
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output, State
 from flask_login.utils import _secret_key
@@ -10,16 +12,59 @@ from dash_flask_login import FlaskLoginAuth
 
 # Setup the Flask server
 server = Flask(__name__)
-
-# config
-server.config.update(
-    _secret_key = urandom(12),
-)
+server.secret_key = 'super secret string'  # Change this!
 
 # Setup the loginmanager for the server
 login_manager = LoginManager()
 login_manager.init_app(server)
-login_manager.login_view = "/login"
+login_manager.login_view = "/login/"
+
+# Our mock database.
+users = {'foo@bar.tld': {'password': 'secret'}}
+
+class User(UserMixin):
+    pass
+
+@login_manager.user_loader
+def user_loader(email):
+    if email not in users:
+        return
+
+    user = User()
+    user.id = email
+    return user
+
+@login_manager.request_loader
+def request_loader(request):
+    email = request.form.get('email')
+    if email not in users:
+        return
+
+    user = User()
+    user.id = email
+    return user
+
+@server.route('/login/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return '''
+               <form action='login' method='POST'>
+                <input type='text' name='email' id='email' placeholder='email'/>
+                <input type='password' name='password' id='password' placeholder='password'/>
+                <input type='submit' name='submit'/>
+               </form>
+               '''
+
+    email = request.form['email']
+    if request.form['password'] == users[email]['password']:
+        user = User()
+        user.id = email
+        login_user(user)
+        return redirect(url_for('/protected/'))
+
+    return 'Bad login'
+
+
 
 # external CSS stylesheets
 external_stylesheets = [
@@ -37,6 +82,28 @@ app = Dash(name="app1", url_base_pathname='/app1/', server=server,
                 external_stylesheets=external_stylesheets)
 
 app.scripts.config.serve_locally = False
+
+app.layout = html.Div(children=[
+    html.H1(children='Hello Dash'),
+
+    html.Div(children='''
+        Dash: A web application framework for Python.
+    '''),
+
+    dcc.Graph(
+        id='example-graph',
+        figure={
+            'data': [
+                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
+            ],
+            'layout': {
+                'title': 'Dash Data Visualization'
+            }
+        }
+    ),
+    html.A(html.Button('Log Out!'), href='/logout/')
+])
 
 # Create Login Dash App with a login form
 login_app = Dash(name='login-app', url_base_pathname='/login/', server=server,
@@ -113,34 +180,19 @@ auth = FlaskLoginAuth(app)
 # add logout app to FlaskLoginAuth
 auth.add_app(logout_app)
 
-class User(UserMixin):
 
-    def __init__(self, id):
-        self.id = id
-        self.name = "user" + str(id)
-        self.password = self.name + "_secret"
 
-    def __repr__(self):
-        return "%d/%s/%s" % (self.id, self.name, self.password)
+# @login_manager.request_loader
+# def request_loader(request):
+#     email = request.form.get('email')
+#     if email not in users:
+#         return
 
-# Create some users
-users = [User(id) for id in range(1, 21)]
+#     user = User()
+#     user.id = email
+#     return user
 
-@login_manager.user_loader
-def load_user(userid):
-    return User(userid)
-
-@login_manager.request_loader
-def request_loader(request):
-    email = request.form.get('email')
-    if email not in users:
-        return
-
-    user = User()
-    user.id = email
-    return user
-
-@server.route('/protected')
+@server.route('/protected/')
 @login_required
 def protected():
     return 'logged in as : ' + current_user.id
@@ -153,40 +205,6 @@ def logout():
 @login_manager.unauthorized_handler
 def unauthorized_handler():
     return 'Unauthorized'
-
-app.layout = html.Div(children=[
-    html.H1(children='Hello Dash'),
-
-    html.Div(children='''
-        Dash: A web application framework for Python.
-    '''),
-
-    dcc.Graph(
-        id='example-graph',
-        figure={
-            'data': [
-                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
-            ],
-            'layout': {
-                'title': 'Dash Data Visualization'
-            }
-        }
-    ),
-    html.A(html.Button('Log Out!'), href='/logout')
-])
-
-# Adding this route allows us to use the POST method on our login app.
-# It also allows us to implement HTTP Redirect when the login form is submitted.
-@server.route('/login/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        if request.args.get('next'):
-            return redirect(request.args.get('next'))
-        else:
-            return redirect('/login/')
-    else:
-        return redirect('/login/')
 
 # Run the server
 if __name__ == '__main__':
