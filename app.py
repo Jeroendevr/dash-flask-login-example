@@ -21,8 +21,6 @@ login_manager = LoginManager()
 login_manager.init_app(server)
 login_manager.login_view = "/login"
 
-
-
 # external CSS stylesheets
 external_stylesheets = [
     'https://codepen.io/chriddyp/pen/bWLwgP.css',
@@ -70,7 +68,7 @@ login_app.layout = html.Div([
 
         ]
     ),
-    html.A(html.Button('app1'), href='/app1', style={'display':'none'}, id='hidden-link')
+    html.A(html.Button('app1'), href='/app1/', style={'display':'none'}, id='hidden-link')
 ]
 )
 
@@ -97,7 +95,7 @@ logout_app.layout = html.Div([
     html.H1('You have successfully logged out!', id='h1'),
 
     # Since we've logged out, this will force a redirect to the login page with a next page of /app1
-    html.A(html.Button('Log Back In'), href='/app1', id='login-button'),
+    html.A(html.Button('Log Back In'), href='/app1/', id='login-button'),
 ]
 )
 
@@ -115,11 +113,18 @@ auth = FlaskLoginAuth(app)
 # add logout app to FlaskLoginAuth
 auth.add_app(logout_app)
 
-# Database
-users = {'tim@tim.tld':{'password': 'hoi'}}
-
 class User(UserMixin):
-    pass
+
+    def __init__(self, id):
+        self.id = id
+        self.name = "user" + str(id)
+        self.password = self.name + "_secret"
+
+    def __repr__(self):
+        return "%d/%s/%s" % (self.id, self.name, self.password)
+
+# Create some users
+users = [User(id) for id in range(1, 21)]
 
 @login_manager.user_loader
 def load_user(userid):
@@ -134,17 +139,6 @@ def request_loader(request):
     user = User()
     user.id = email
     return user
-
-
-@server.route('/login', methods=['GET', 'Post'])
-def login():
-    if request.method == 'POST':
-        if request.args.get('next'):
-            return redirect(request.args.get('next'))
-        else:
-            return redirect('/login')
-    else:
-        return redirect('/login')
 
 @server.route('/protected')
 @login_required
@@ -182,5 +176,18 @@ app.layout = html.Div(children=[
     html.A(html.Button('Log Out!'), href='/logout')
 ])
 
+# Adding this route allows us to use the POST method on our login app.
+# It also allows us to implement HTTP Redirect when the login form is submitted.
+@server.route('/login/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        if request.args.get('next'):
+            return redirect(request.args.get('next'))
+        else:
+            return redirect('/login/')
+    else:
+        return redirect('/login/')
+
+# Run the server
 if __name__ == '__main__':
     server.run(debug=True)
