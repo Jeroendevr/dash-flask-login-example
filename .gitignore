@@ -1,3 +1,4 @@
 .DS_Store
 flask_auth.code-workspace
 __pycache__/*
+dash-flask-login
