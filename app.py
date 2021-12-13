@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 from flask import Flask, redirect, request, url_for
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from dash_flask_login import FlaskLoginAuth
 
 server = Flask(__name__)
 server.secret_key = "super secret string"
@@ -72,6 +73,7 @@ def logout():
 def unauthorized_handler():
     return 'Unauthorized'
 
+
 app = Dash(name='app1', url_base_pathname='/app1/', server=server)
 df = pd.DataFrame({
     "Fruit": ["Apples", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
@@ -93,6 +95,9 @@ app.layout = html.Div(children=[
         figure=fig
     )
 ])
+
+auth = FlaskLoginAuth(app)
+
 
 if __name__ == '__main__':
     server.run_server(debug=True)
