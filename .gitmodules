@@ -1,0 +1,3 @@
+[submodule "dash-flask-login"]
+	path = dash-flask-login
+	url = https://github.com/Jeroendevr/dash-flask-login
