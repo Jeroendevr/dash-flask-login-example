@@ -4,11 +4,11 @@ import plotly.express as px
 from flask import Flask, redirect, request, url_for
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
-app = Flask(__name__)
-app.secret_key = "super secret string"
+server = Flask(__name__)
+server.secret_key = "super secret string"
 
 login_manager = LoginManager()
-login_manager.init_app(app)
+login_manager.init_app(server)
 
 # Our mock database.
 users = {'foo@bar.tld': {'password': 'secret'}}
@@ -36,7 +36,7 @@ def request_loader(request):
     user.id = email
     return user
 
-@app.route('/login', methods=['GET', 'POST'])
+@server.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
         return '''
@@ -57,12 +57,12 @@ def login():
     return 'Bad login'
 
 
-@app.route('/protected')
+@server.route('/protected')
 @login_required
 def protected():
     return 'Logged in as: ' + current_user.id
 
-@app.route('/logout')
+@server.route('/logout')
 def logout():
     logout_user()
     return 'Logged out'
@@ -71,26 +71,26 @@ def logout():
 def unauthorized_handler():
     return 'Unauthorized'
 
-# df = pd.DataFrame({
-#     "Fruit": ["Apples", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
-#     "Amount": [4, 1, 2, 2, 4, 5],
-#     "City": ["SF", "SF", "SF", "Montreal", "Montreal", "Montreal"]
-# })
+df = pd.DataFrame({
+    "Fruit": ["Apples", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
+    "Amount": [4, 1, 2, 2, 4, 5],
+    "City": ["SF", "SF", "SF", "Montreal", "Montreal", "Montreal"]
+})
 
-# # fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="group")
+fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="group")
 
-# # app.layout = html.Div(children=[
-# #     html.H1(children='Hello Dash'),
+server.layout = html.Div(children=[
+    html.H1(children='Hello Dash'),
 
-# #     html.Div(children='''
-# #         Dash: A web application framework for your data.
-# #     '''),
+    html.Div(children='''
+        Dash: A web application framework for your data.
+    '''),
 
-# #     dcc.Graph(
-# #         id='example-graph',
-# #         figure=fig
-# #     )
-# # ])
+    dcc.Graph(
+        id='example-graph',
+        figure=fig
+    )
+])
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    server.run_server(debug=True)
